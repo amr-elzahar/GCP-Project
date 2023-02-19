@@ -25,20 +25,18 @@ resource "google_compute_firewall" "ssh-firewall" {
 }
 // CREATE SUBNETS
 resource "google_compute_subnetwork" "management-subnet" {
-  name          = "management-subnet"
-  region        = "us-east1"
-  ip_cidr_range = "10.10.0.0/16"
-  # ip_cidr_range = "10.0.0.0/24"
+  name                     = "management-subnet"
+  region                   = "us-east1"
+  ip_cidr_range            = "10.10.0.0/16"
   network                  = google_compute_network.demo-vpc.id
   private_ip_google_access = true
 }
 
 
 resource "google_compute_subnetwork" "restricted-subnet" {
-  name          = "restricted-subnet"
-  region        = "us-east1"
-  ip_cidr_range = "10.11.0.0/16"
-  # ip_cidr_range = "10.0.1.0/24"
+  name                     = "restricted-subnet"
+  region                   = "us-east1"
+  ip_cidr_range            = "10.11.0.0/16"
   network                  = google_compute_network.demo-vpc.id
   private_ip_google_access = true
 }
@@ -162,7 +160,6 @@ resource "google_container_node_pool" "private-gke-node-pool" {
       "https://www.googleapis.com/auth/servicecontrol",
       "https://www.googleapis.com/auth/service.management.readonly",
       "https://www.googleapis.com/auth/trace.append",
-      # "https://www.googleapis.com/auth/cloud-platform"
     ]
   }
 }
