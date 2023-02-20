@@ -23,6 +23,9 @@ terraform apply --auto-approve
 
 ## Usage
 NOTE: before you start, you have to push the application docker image to google container registry.
+
+![SSH To VM](https://github.com/amr-elzahar/GCP-Project/blob/main/images/gcr.png?raw=true)
+
   
 Steps:
 1) SSH to the VM instance
