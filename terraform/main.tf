@@ -11,7 +11,7 @@ resource "google_compute_network" "demo-vpc" {
   auto_create_subnetworks = false
 }
 
-// CREATE FIREWALL TO ALLOW SSH
+// CREATE FIREWALL TO ALLOW SSH AND HTTP(S)
 resource "google_compute_firewall" "ssh-firewall" {
   name          = "allow-ssh"
   network       = google_compute_network.demo-vpc.id
@@ -19,7 +19,7 @@ resource "google_compute_firewall" "ssh-firewall" {
 
   allow {
     protocol = "tcp"
-    ports    = ["22", "80"]
+    ports    = ["22", "80", "443"]
   }
 }
 
@@ -94,7 +94,6 @@ resource "google_compute_instance" "management-private-vm" {
   service_account {
     email = google_service_account.vm-service-account.email
     scopes = [
-      "https://www.googleapis.com/auth/devstorage.read_only",
       "https://www.googleapis.com/auth/cloud-platform",
     ]
   }
@@ -170,7 +169,6 @@ resource "google_container_node_pool" "private-gke-node-pool" {
 
     service_account = google_service_account.gke-service-account.email
     oauth_scopes = [
-      "https://www.googleapis.com/auth/devstorage.read_only",
       "https://www.googleapis.com/auth/cloud-platform",
     ]
   }
