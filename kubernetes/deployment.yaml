@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-dep
+  name: python-app-deployment
 spec:
   replicas: 3
   selector:
     matchLabels:
-      name: app-dep
+      name: python-app-deployment
   template:
     metadata:
       labels:
-        name: app-dep
+        name: python-app-deployment
     spec:
       containers:
-        - name: app-dep-container
+        - name: python-app-container
           image: gcr.io/amr-1-377214/python-app
           ports:
             - containerPort: 8000
-        - name: redis-cont
+        - name: redis-container
           image: redis
           ports:
             - containerPort: 6379
