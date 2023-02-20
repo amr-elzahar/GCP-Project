@@ -11,7 +11,6 @@ resource "google_compute_network" "demo-vpc" {
   auto_create_subnetworks = false
 }
 
-
 // CREATE FIREWALL TO ALLOW SSH
 resource "google_compute_firewall" "ssh-firewall" {
   name          = "allow-ssh"
@@ -20,10 +19,11 @@ resource "google_compute_firewall" "ssh-firewall" {
 
   allow {
     protocol = "tcp"
-    ports    = ["22"]
+    ports    = ["22", "80"]
   }
 }
-// CREATE SUBNETS
+
+// CREATE MANAGEMENT SUBNET
 resource "google_compute_subnetwork" "management-subnet" {
   name                     = "management-subnet"
   region                   = "us-east1"
@@ -32,7 +32,7 @@ resource "google_compute_subnetwork" "management-subnet" {
   private_ip_google_access = true
 }
 
-
+// CREATE RESTRICTED SUBNET
 resource "google_compute_subnetwork" "restricted-subnet" {
   name                     = "restricted-subnet"
   region                   = "us-east1"
@@ -41,14 +41,14 @@ resource "google_compute_subnetwork" "restricted-subnet" {
   private_ip_google_access = true
 }
 
-// CREATE ROUTER
+// CREATE MANAGEMENT ROUTER
 resource "google_compute_router" "management-router" {
   name    = "management-router-nat"
   network = google_compute_network.demo-vpc.name
   region  = "us-east1"
 }
 
-// CREATE NAT GATEWAY
+// CREATE MANAGEMENT NAT GATEWAY
 resource "google_compute_router_nat" "management-router-nat" {
   name                               = "management-router-nat"
   router                             = google_compute_router.management-router.name
@@ -57,11 +57,17 @@ resource "google_compute_router_nat" "management-router-nat" {
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 }
 
-
 // CREATE VM SERVICE ACCOUNT
 resource "google_service_account" "vm-service-account" {
   account_id   = "vm-service-account"
   display_name = "Private VM service account"
+}
+
+// CREATE VM ROLE
+resource "google_project_iam_member" "vm-sa-role" {
+  project = "amr-1-377214"
+  role    = "roles/container.admin"
+  member  = "serviceAccount:${google_service_account.vm-service-account.email}"
 }
 
 // CREATE PRIVATE VM INSTANCE
@@ -86,15 +92,27 @@ resource "google_compute_instance" "management-private-vm" {
   }
 
   service_account {
-    email  = google_service_account.vm-service-account.email
-    scopes = ["https://www.googleapis.com/auth/devstorage.read_only"]
+    email = google_service_account.vm-service-account.email
+    scopes = [
+      "https://www.googleapis.com/auth/devstorage.read_only",
+      "https://www.googleapis.com/auth/cloud-platform",
+    ]
   }
+
+  metadata_startup_script = file("script.sh")
 }
 
 //CREATE GKE SERVICE ACCOUNT
 resource "google_service_account" "gke-service-account" {
   account_id   = "gke-service-account"
   display_name = "GKE service account"
+}
+
+// CREATE GKE ROLE
+resource "google_project_iam_member" "gke-sa-role" {
+  project = "amr-1-377214"
+  role    = "roles/storage.objectViewer"
+  member  = "serviceAccount:${google_service_account.gke-service-account.email}"
 }
 
 //CREATE PRIVATE GKE
@@ -105,7 +123,6 @@ resource "google_container_cluster" "private-gke" {
   initial_node_count       = 1
   network                  = google_compute_network.demo-vpc.id
   subnetwork               = google_compute_subnetwork.restricted-subnet.id
-
 
   release_channel {
     channel = "REGULAR"
@@ -129,7 +146,6 @@ resource "google_container_cluster" "private-gke" {
     master_ipv4_cidr_block  = "10.100.100.0/28"
   }
 }
-
 
 // CREATE NODE POOL
 resource "google_container_node_pool" "private-gke-node-pool" {
@@ -155,11 +171,7 @@ resource "google_container_node_pool" "private-gke-node-pool" {
     service_account = google_service_account.gke-service-account.email
     oauth_scopes = [
       "https://www.googleapis.com/auth/devstorage.read_only",
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring",
-      "https://www.googleapis.com/auth/servicecontrol",
-      "https://www.googleapis.com/auth/service.management.readonly",
-      "https://www.googleapis.com/auth/trace.append",
+      "https://www.googleapis.com/auth/cloud-platform",
     ]
   }
 }
