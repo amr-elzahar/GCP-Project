@@ -12,7 +12,7 @@ resource "google_compute_network" "demo-vpc" {
 }
 
 // CREATE FIREWALL TO ALLOW SSH AND HTTP
-resource "google_compute_firewall" "ssh-firewall" {
+resource "google_compute_firewall" "vpc-firewall" {
   name          = "allow-ssh"
   network       = google_compute_network.demo-vpc.id
   source_ranges = ["0.0.0.0/0"]
