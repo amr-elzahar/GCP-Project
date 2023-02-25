@@ -11,7 +11,7 @@ resource "google_compute_network" "demo-vpc" {
   auto_create_subnetworks = false
 }
 
-// CREATE FIREWALL TO ALLOW SSH AND HTTP(S)
+// CREATE FIREWALL TO ALLOW SSH AND HTTP
 resource "google_compute_firewall" "ssh-firewall" {
   name          = "allow-ssh"
   network       = google_compute_network.demo-vpc.id
@@ -19,7 +19,7 @@ resource "google_compute_firewall" "ssh-firewall" {
 
   allow {
     protocol = "tcp"
-    ports    = ["22", "80", "443"]
+    ports    = ["22", "80"]
   }
 }
 
@@ -54,7 +54,12 @@ resource "google_compute_router_nat" "management-router-nat" {
   router                             = google_compute_router.management-router.name
   region                             = google_compute_router.management-router.region
   nat_ip_allocate_option             = "AUTO_ONLY"
-  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+  source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
+
+  subnetwork {
+    name                    = google_compute_subnetwork.management-subnet.name
+    source_ip_ranges_to_nat = ["10.10.0.0/16"]
+  }
 }
 
 // CREATE VM SERVICE ACCOUNT
